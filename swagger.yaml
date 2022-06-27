@@ -1,0 +1,63 @@
+openapi: 3.0.0
+info:
+  title: T-shirt store
+  description: Create a api in nodeJs
+  version: 1.1.0
+  contact:
+    email: boarsedarshan77@gmail.com
+    url: "https://production-first.herokuapp.com/"
+
+# servers:
+#   - url: http://localhost:4000/api/v1
+#     description: For the localhost - regular
+#   - url: https://localhost:4000/api/v1
+#     description: For the localhost - secure
+
+servers:
+  - url: "{protocols}://localhost:4000/api/{version}"
+    description: For the localhost
+    variables:
+      version:
+        enum:
+          - v1
+          - v2
+        default: v1
+      protocols:
+        enum:
+          - http
+          - https
+        default: http
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+paths:
+  /dummy:
+    get:
+      summary: returns a greet message from t-shirt store
+      tags:
+        - String
+      responses:
+        200:
+          description: All good and success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  greeting:
+                    type: string
+        400:
+          description: Bad request
+        500:
+          description: Internal server error
