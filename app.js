@@ -15,7 +15,15 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // cookieParser and fileUpload middleware
 app.use(cookieParser());
-app.use(fileUpload());
+app.use(
+  fileUpload({
+    useTempFiles: true,
+    tempFileDir: "/tmp/",
+  })
+);
+
+// EJS middleware
+app.set("view engine", "ejs");
 
 // Regular middleware
 app.use(express.json());
@@ -26,9 +34,16 @@ app.use(morgan("tiny"));
 
 // import all routes here
 const home = require("./routes/home.routes");
+const user = require("./routes/user.routes");
 
 // routes middleware
 app.use("/api/v1", home);
+app.use("/api/v1", user);
+
+// frontend testing route
+app.get("/postform", (req, res) => {
+  return res.render("postForm");
+});
 
 // export app js
 module.exports = app;
