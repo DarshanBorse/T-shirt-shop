@@ -2,7 +2,9 @@ const user = require("../models/user.model");
 const customError = require("../utils/customError");
 const bigPromise = require("./../middleware/bigPromise");
 const cookieToken = require("../utils/cookieToken");
+const mailHelper = require("../utils/mailHelper");
 const cloudinary = require("cloudinary").v2;
+const crypto = require("crypto");
 
 exports.signup = bigPromise(async (req, res, next) => {
   if (!req.files) {
@@ -34,4 +36,141 @@ exports.signup = bigPromise(async (req, res, next) => {
   });
 
   cookieToken(saveUser, res);
+});
+
+exports.login = bigPromise(async (req, res, next) => {
+  const { email, password } = req.body;
+
+  // Check for presence of email and password
+  if (!(email && password)) {
+    return next(new customError(`Please provide email and password`, 400));
+  }
+
+  // Get user from DB
+  const userExist = await user.findOne({ email }).select("+password");
+
+  // User not found in DB
+  if (!userExist) {
+    return next(
+      new customError(`Email or password does not match or exist`, 400)
+    );
+  }
+
+  // Match the password
+  const passwordValidation = await userExist.isValidatedPassword(password);
+
+  // if password do not match
+  if (!passwordValidation) {
+    return next(
+      new customError(`Email or password does not match or exist`, 400)
+    );
+  }
+
+  // if goes all good and we send the token
+  cookieToken(userExist, res);
+});
+
+exports.logout = bigPromise(async (req, res, next) => {
+  // Clear the cookie
+  res.cookie("token", null, {
+    expires: new Date(Date.now()),
+    httpOnly: true,
+  });
+
+  //send JSON response for success
+  res.status(200).json({
+    success: true,
+    message: "Logout Success",
+  });
+});
+
+exports.forgotPassword = bigPromise(async (req, res, next) => {
+  // collect email
+  const { email } = req.body;
+
+  // find user in database
+  const userExist = await user.findOne({ email });
+
+  // if user not found in database
+  if (!userExist) {
+    return next(new customError("Email not found as registered", 400));
+  }
+
+  //get token from user model methods
+  const forgotToken = userExist.getForgotPasswordToken();
+
+  // save user fields in DB
+  await userExist.save({ validateBeforeSave: false });
+
+  // create a URL
+  const myUrl = `${req.protocol}://${req.get(
+    "host"
+  )}/api/v1/password/reset/${forgotToken}`;
+
+  // craft a message
+  const message = `Copy paste this link in your URL and hit enter \n\n ${myUrl}`;
+
+  // attempt to send email
+  try {
+    await mailHelper({
+      email: userExist.email,
+      subject: "LCO TStore - Password reset email",
+      message,
+    });
+
+    // json reponse if email is success
+    res.status(200).json({
+      succes: true,
+      message: "Email sent successfully",
+    });
+  } catch (error) {
+    // reset user fields if things goes wrong
+    userExist.forgotPasswordToken = undefined;
+    userExist.forgotPasswordExpiry = undefined;
+    await userExist.save({ validateBeforeSave: false });
+
+    // send error response
+    return next(new customError(error.message, 500));
+  }
+});
+
+exports.passwordReset = bigPromise(async (req, res, next) => {
+  const token = req.params.token;
+
+  const encryToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const userExist = await user.findOne({
+    encryToken,
+    forgotPasswordExpiry: { $gt: Date.now() },
+  });
+
+  if (!userExist) {
+    return next(new customError("Token is invalid or expired", 400));
+  }
+
+  if (!(req.body.password && req.body.confirmPassword)) {
+    return next(
+      new customError("Please Provide password and confirm password", 400)
+    );
+  }
+
+  if (req.body.password !== req.body.confirmPassword) {
+    return next(
+      new customError("password and confirm password do not match", 400)
+    );
+  }
+
+  // update password field in DB
+  userExist.password = req.body.password;
+
+  // reset token fields
+  userExist.forgotPasswordToken = undefined;
+  userExist.forgotPasswordExpiry = undefined;
+
+  // save the user
+  await userExist.save();
+
+  // send a JSON response OR send token
+
+  cookieToken(userExist, res);
 });

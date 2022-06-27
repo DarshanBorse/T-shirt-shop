@@ -59,7 +59,7 @@ userSchema.methods.isValidatedPassword = async function (userSendPassword) {
   return await bcryptjs.compare(userSendPassword, this.password);
 };
 
-// validate the password with passed on user password
+// Return a jwt token
 userSchema.methods.getJwtToken = function () {
   return jwt.sign({ id: this._id }, JWT_SECRET, {
     expiresIn: JWT_EXPIRY,
@@ -67,7 +67,7 @@ userSchema.methods.getJwtToken = function () {
 };
 
 //generate forgot password token (string)
-userSchema.methods.getForgotPasswordToken = () => {
+userSchema.methods.getForgotPasswordToken = function () {
   // generate a long and randomg string
   const forgotToken = crypto.randomBytes(20).toString("hex");
 
