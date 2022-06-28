@@ -35,10 +35,12 @@ app.use(morgan("tiny"));
 // import all routes here
 const home = require("./routes/home.routes");
 const user = require("./routes/user.routes");
+const product = require("./routes/product.routes");
 
 // routes middleware
 app.use("/api/v1", home);
 app.use("/api/v1", user);
+app.use("/api/v1", product);
 
 // frontend testing route
 app.get("/postform", (req, res) => {
