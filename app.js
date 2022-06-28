@@ -45,5 +45,9 @@ app.get("/postform", (req, res) => {
   return res.render("postForm");
 });
 
+app.get("/", (req, res) => {
+  return res.send(`Hello from t-shirt`);
+});
+
 // export app js
 module.exports = app;
