@@ -36,11 +36,15 @@ app.use(morgan("tiny"));
 const home = require("./routes/home.routes");
 const user = require("./routes/user.routes");
 const product = require("./routes/product.routes");
+const payment = require("./routes/payment.routes");
+const order = require("./routes/order.routes");
 
 // routes middleware
 app.use("/api/v1", home);
 app.use("/api/v1", user);
 app.use("/api/v1", product);
+app.use("/api/v1", payment);
+app.use("/api/v1", order);
 
 // frontend testing route
 app.get("/postform", (req, res) => {

@@ -40,7 +40,7 @@ exports.addProduct = bigPromise(async (req, res, next) => {
   });
 });
 
-exports.getOneProduct = BigPromise(async (req, res, next) => {
+exports.getOneProduct = bigPromise(async (req, res, next) => {
   const products = await product.findById(req.params.id);
 
   if (!products) {
@@ -157,7 +157,7 @@ exports.deleteReview = bigPromise(async (req, res, next) => {
   });
 });
 
-exports.getOnlyReviewsForOneProduct = BigPromise(async (req, res, next) => {
+exports.getOnlyReviewsForOneProduct = bigPromise(async (req, res, next) => {
   const products = await product.findById(req.query.id);
 
   res.status(200).json({
