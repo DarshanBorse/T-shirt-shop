@@ -87,7 +87,7 @@ exports.adminUpdateOrder = bigPromise(async (req, res, next) => {
   });
 });
 
-exports.adminDeleteOrder = BigPromise(async (req, res, next) => {
+exports.adminDeleteOrder = bigPromise(async (req, res, next) => {
   const order = await orderModel.findById(req.params.id);
 
   await order.remove();
